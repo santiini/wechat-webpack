@@ -2,6 +2,7 @@ const { resolve } = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MinaWebpackPlugin = require('./plugin/MinaWebpackPlugin');
+const MinaRuntimePlugin = require('./plugin/MinaRuntimePlugin');
 
 module.exports = {
   // context 字段设置了项目入口文件的包含目录，绝对路径;
@@ -20,6 +21,8 @@ module.exports = {
   output: {
     path: resolve('dist'),
     filename: '[name].js',
+    // 配置全局对象 window，改变它的别名
+    globalObject: 'wx',
   },
 
   // loader 配置
@@ -49,7 +52,16 @@ module.exports = {
     ]),
     // 自定把小程序的配置中的 pages 下的目录注册到 entry 中
     new MinaWebpackPlugin(),
+    // 把 runtime.js 引入到各个文件中
+    new MinaRuntimePlugin(),
   ],
+
+  // 共用代码的提取
+  optimization: {
+    runtimeChunk: {
+      name: 'runtime',
+    },
+  },
 
   // devlopment, production 等环境设置
   mode: 'none',
