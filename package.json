@@ -8,8 +8,9 @@
   "description": "## 一些配置的说明",
   "main": "index.js",
   "scripts": {
-    "dev": "npx webpack --watch --progress",
-    "dist": "npx webpack --mode=production"
+    "dev": "webpack --watch --progress",
+    "dist": "npx webpack --mode=production",
+    "build": "cross-env NODE_ENV=production BUILD_TYPE=release webpack"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
+    "cross-env": "^6.0.3",
     "ensure-posix-path": "^1.1.1",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",

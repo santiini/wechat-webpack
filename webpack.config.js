@@ -1,9 +1,13 @@
 const { resolve } = require('path');
+const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const LodashWebpackPlugin = require('lodash-webpack-plugin');
 const MinaWebpackPlugin = require('./plugin/MinaWebpackPlugin');
 const MinaRuntimePlugin = require('./plugin/MinaRuntimePlugin');
+
+// 构建类型: 是否发布
+const debuggable = process.env.BUILD_TYPE !== 'release';
 
 module.exports = {
   // context 字段设置了项目入口文件的包含目录，绝对路径;
@@ -57,6 +61,13 @@ module.exports = {
     new MinaRuntimePlugin(),
     // lodash 的按需加载
     new LodashWebpackPlugin(),
+    // webpack 环境配置
+    new webpack.EnvironmentPlugin({
+      // 环境变量配置
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV) || 'development',
+      // 构建类型
+      BUILD_TYPE: JSON.stringify(process.env.BUILD_TYPE) || 'debug',
+    }),
   ],
 
   // 共用代码的提取
@@ -75,5 +86,5 @@ module.exports = {
   },
 
   // devlopment, production 等环境设置
-  mode: 'production',
+  mode: debuggable ? 'none' : 'production',
 };

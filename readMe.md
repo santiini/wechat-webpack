@@ -159,6 +159,43 @@ npm i --save-dev babel-plugin-lodash lodash-webpack-plugin
 
 ```
 
+### 八、多环境的配置
+
+项目中使用两个变量分别控制 构建模式和 环境变量
+
+1. NODE_ENV : 环境变量
+2. BUILD_TYPE： 构建模式
+
+webpack.config.js 配置:
+
+```js
++ const webpack = require('webpack');
++ const debuggable = process.env.BUILD_TYPE !== 'release'
+module.exports = {
+  plugins: [
++     new webpack.EnvironmentPlugin({
++       NODE_ENV: JSON.stringify(process.env.NODE_ENV) || 'development',
++       BUILD_TYPE: JSON.stringify(process.env.BUILD_TYPE) || 'debug',
++     }),
+  ],
+-   mode: 'none',
++   mode: debuggable ? 'none' : 'production',
+}
+
+```
+
+启动脚本设置:
+
+```js
+{
+  "scripts": {
+    "start": "webpack --watch --progress",
+    "build": "cross-env NODE_ENV=production BUILD_TYPE=release webpack"
+  }
+}
+
+```
+
 ## 小程序的运行
 
 由于小程序的入口目录调整为: /dist，所以需要打包后的代码才能使用;
