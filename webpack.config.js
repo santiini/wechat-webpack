@@ -87,4 +87,7 @@ module.exports = {
 
   // devlopment, production 等环境设置
   mode: debuggable ? 'none' : 'production',
+
+  // source map
+  devtool: debuggable ? 'inline-source-map' : 'source-map',
 };
