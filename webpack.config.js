@@ -1,24 +1,25 @@
-const { resolve } = require("path");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const { resolve } = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MinaWebpackPlugin = require('./plugin/MinaWebpackPlugin');
 
 module.exports = {
   // context 字段设置了项目入口文件的包含目录，绝对路径;
-  context: resolve("src"),
+  context: resolve('src'),
 
-  //  单入口的配置
-  // entry: "./app.js",
+  //  单入口的配置 -- 配合插件 MinaWebpackPlugin 使用
+  entry: './app.js',
   // 多入口的配置
-  entry: {
-    app: "./app.js",
-    "pages/index/index": "./pages/index/index.js",
-    "pages/logs/logs": "./pages/logs/logs.js"
-  },
+  // entry: {
+  //   app: './app.js',
+  //   'pages/index/index': './pages/index/index.js',
+  //   'pages/logs/logs': './pages/logs/logs.js',
+  // },
 
   // 输出文件的配置
   output: {
-    path: resolve("dist"),
-    filename: "[name].js"
+    path: resolve('dist'),
+    filename: '[name].js',
   },
 
   // loader 配置
@@ -27,27 +28,29 @@ module.exports = {
       // babel 解析 js 文件，支持 es6,7,8语法
       {
         test: /\.js$/,
-        use: "babel-loader"
-      }
-    ]
+        use: 'babel-loader',
+      },
+    ],
   },
 
   // 插件
   plugins: [
     new CleanWebpackPlugin({
-      cleanStaleWebpackAssets: false
+      cleanStaleWebpackAssets: false,
     }),
     // 复制源文件到 /dist 目录
     new CopyWebpackPlugin([
       {
-        from: "**/*",
-        to: "./",
+        from: '**/*',
+        to: './',
         // 从 src 复制文件到 dist 时，排除 js 文件, 因为 js 文件需要 babel 编译;
-        ignore: ["**/*.js"]
-      }
-    ])
+        ignore: ['**/*.js'],
+      },
+    ]),
+    // 自定把小程序的配置中的 pages 下的目录注册到 entry 中
+    new MinaWebpackPlugin(),
   ],
 
   // devlopment, production 等环境设置
-  mode: "none"
+  mode: 'none',
 };
