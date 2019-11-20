@@ -58,6 +58,14 @@ module.exports = {
 
   // 共用代码的提取
   optimization: {
+    // common 公共代码的提取
+    splitChunks: {
+      chunks: 'all',
+      name: 'common',
+      minChunks: 2,
+      minSize: 0,
+    },
+    // runtime 的代码分离和提取
     runtimeChunk: {
       name: 'runtime',
     },

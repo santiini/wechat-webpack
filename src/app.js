@@ -5,7 +5,7 @@
 App({
   onLaunch: function() {
     // 调试 log
-    console.log('------------debug-------------');
+    console.log('------------debug-----success--------');
     // let sFromNowText = moment(new Date().getTime() - 360000).fromNow();
     // console.log(sFromNowText);
     // console.log(camelCase("OnLauch"));

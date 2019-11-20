@@ -4,7 +4,7 @@
   "description": "## 一些配置的说明",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx webpack --watch --progress"
   },
   "keywords": [],
   "author": "",
