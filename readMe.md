@@ -1,5 +1,7 @@
 # Webpack 搭建小程序开发工程
 
+参考地址: [小工具 webpack 搭建](https://juejin.im/post/5d00aa5e5188255a57151c8a#heading-2)
+
 ## 一些配置的说明
 
 webpack 的改造过程中，需要进行很多的配置修改
@@ -40,11 +42,11 @@ replace-ext 可以是一个替换文件扩展名的包;
 npm i --save-dev replace-ext
 ```
 
-参考: 本项目中，使用插件 MinaWebpackPlugin.js 解决该问题;
+参考 1: 本项目中，使用插件 MinaWebpackPlugin.js 解决该问题;
 
-### runtime 代码的抽取, 分离 runtime.js
+参考 2： [webpack 官方插件指南](https://webpack.docschina.org/contribute/writing-a-plugin/)
 
-为了减少打包的文件体积，使用 webpack optimization 抽取 runtime 代码为 runtime.js
+### 三、webpack 全局对象 globalObject 改变 window -> wx
 
 ```js
 // webpack.js
@@ -58,6 +60,21 @@ module.exports = {
 }
 ```
 
+### 四、runtime 代码的抽取, 分离 runtime.js
+
+为了减少打包的文件体积，使用 webpack optimization [配置 runtimeChunk](https://webpack.docschina.org/configuration/optimization/#optimization-runtimechunk) 抽取 runtime 代码为 runtime.js;
+
+改写已有的插件 [MinaRuntimePlugin](https://github.com/tinajs/mina-webpack/tree/master/packages/mina-runtime-webpack-plugin)；
+
+本项目中， 参考文件 `plugin/MinaRuntimePlugin.js`
+
+```js
+plugins: {
+  // 把 runtime.js 引入到各个文件中
+  new MinaRuntimePlugin(),
+}
+```
+
 但是， `npx webpack` 后项目无法运行，原因是: runtime 抽取后，并没有引入到各个需要的模块中, 分析如下:
 
 1. 小程序和 web 应用不一样，web 应用可以通过 `<script>` 标签引用 runtime.js，然而小程序却不能这样。
@@ -67,11 +84,13 @@ module.exports = {
 3. webpack 在 assets 渲染阶段中的代码解析
 
 ```js
-// 对于每一个入口 module, 即通过 compilation.addEntry 添加的模块
-if (chunk.hasEntryModule()) {
-  // 触发 renderWithEntry 事件，让我们有机会修改生成后的代码
-  source = this.hooks.renderWithEntry.call(source, chunk, hash);
-}
+  // 共用代码的提取
+  optimization: {
+    // runtime 的代码分离和提取
+    runtimeChunk: {
+      name: 'runtime',
+    },
+  },
 ```
 
 参考： 本项目中，使用 MinaRuntimePlugin.js 解决该问题;
@@ -79,7 +98,7 @@ if (chunk.hasEntryModule()) {
 最终，查看成功的结果: 查看 `dist/app.js, dist/pages/index/index.js` 等文件，
 它们的首行都添加了类似 `;require('./../../runtime');` 的代码。
 
-### 公共代码的分离和提取，生成文件 common.js
+### 五、 公共代码的分离和提取，生成文件 common.js
 
 项目中的重复代码，防止各个文件中重复引入, 需要分离和提取 common.js
 
@@ -103,6 +122,41 @@ if (chunk.hasEntryModule()) {
 ```js
 require('./../../runtime');
 require('./../../common');
+```
+
+### 六、Tree Shaking 移除没有使用过的方法
+
+我们可以在生成 dist 代码时，移除哪些我们从来没有使用过的方法，这种方式叫做 [tree shaking](https://webpack.docschina.org/guides/tree-shaking/)。就是把树上的枯枝败叶给摇下来，比喻移除无用的代码。
+
+TODO: tree shaking 的使用仍需要优化
+
+### 七、lodash 的按需加载
+
+安装以下两个依赖:
+
+```bash
+npm i --save-dev babel-plugin-lodash lodash-webpack-plugin
+```
+
+修改 webpack.config.js 文件:
+
+```js
+  const MinaRuntimePlugin = require('./plugin/MinaRuntimePlugin');
++ const LodashWebpackPlugin = require('lodash-webpack-plugin');
+
+  new MinaRuntimePlugin(),
++ new LodashWebpackPlugin()
+
+```
+
+修改 .babelrc 文件:
+
+```js
+{
+  "presets": ["@babel/env"],
++ "plugins": ["lodash"]
+}
+
 ```
 
 ## 小程序的运行

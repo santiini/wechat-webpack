@@ -1,6 +1,7 @@
 const { resolve } = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const LodashWebpackPlugin = require('lodash-webpack-plugin');
 const MinaWebpackPlugin = require('./plugin/MinaWebpackPlugin');
 const MinaRuntimePlugin = require('./plugin/MinaRuntimePlugin');
 
@@ -54,11 +55,13 @@ module.exports = {
     new MinaWebpackPlugin(),
     // 把 runtime.js 引入到各个文件中
     new MinaRuntimePlugin(),
+    // lodash 的按需加载
+    new LodashWebpackPlugin(),
   ],
 
   // 共用代码的提取
   optimization: {
-    // common 公共代码的提取
+    // common 业务公共代码的提取
     splitChunks: {
       chunks: 'all',
       name: 'common',
@@ -72,5 +75,5 @@ module.exports = {
   },
 
   // devlopment, production 等环境设置
-  mode: 'none',
+  mode: 'production',
 };

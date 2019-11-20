@@ -1,14 +1,18 @@
+import { square } from './utils/match';
+
 //app.js
-// import { camelCase } from "lodash";
+import { camelCase } from 'lodash';
 // import moment from "moment";
 
 App({
   onLaunch: function() {
     // 调试 log
     console.log('------------debug-----success--------');
+    console.log(square(2));
+
     // let sFromNowText = moment(new Date().getTime() - 360000).fromNow();
     // console.log(sFromNowText);
-    // console.log(camelCase("OnLauch"));
+    console.log(camelCase('OnLauch'));
 
     // 展示本地存储能力
     var logs = wx.getStorageSync('logs') || [];

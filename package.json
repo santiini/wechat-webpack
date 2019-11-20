@@ -1,10 +1,15 @@
 {
   "name": "webpack-demo2",
+  "sideEffects": [
+    "./src/utils/match.js",
+    "*.css"
+  ],
   "version": "1.0.0",
   "description": "## 一些配置的说明",
   "main": "index.js",
   "scripts": {
-    "start": "npx webpack --watch --progress"
+    "dev": "npx webpack --watch --progress",
+    "dist": "npx webpack --mode=production"
   },
   "keywords": [],
   "author": "",
@@ -13,8 +18,10 @@
     "@babel/core": "^7.7.2",
     "@babel/preset-env": "^7.7.1",
     "babel-loader": "^8.0.6",
+    "babel-plugin-lodash": "^3.3.4",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.0.5",
+    "lodash-webpack-plugin": "^0.11.5",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },

@@ -1,4 +1,5 @@
 // .babelrc
 {
-  "presets": ["@babel/env"]
+  "presets": ["@babel/env"],
+  "plugins": ["lodash"]
 }
