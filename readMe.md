@@ -2,6 +2,10 @@
 
 ## 一些配置的说明
 
+webpack 的改造过程中，需要进行很多的配置修改
+
+### 修改小程序的入口目录
+
 在 project.config.jsong 中，因为移动了 app.js 的位置，需要指定;
 
 在本项目中，把 webpack 打包后的项目作为小程序的入口;
@@ -37,3 +41,13 @@ npm i --save-dev replace-ext
 ```
 
 ### 公共代码的抽取, 分离 runtime.js
+
+## 小程序的允许
+
+由于小程序的入口目录调整为: /dist，所以需要打包后的代码才能使用;
+
+```bash
+  npx webpack
+```
+
+tips: 这里存在优化的空间
