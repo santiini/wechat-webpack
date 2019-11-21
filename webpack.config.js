@@ -38,6 +38,28 @@ module.exports = {
         test: /\.js$/,
         use: 'babel-loader',
       },
+      // less
+      {
+        test: /\.(less)$/,
+        include: /src/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              useRelativePath: true,
+              name: '[path][name].wxss',
+              context: resolve('src'),
+            },
+          },
+          {
+            loader: 'less-loader', // compiles Less to CSS
+            options: {
+              strictMath: true,
+              noIeCompat: true,
+            },
+          },
+        ],
+      },
     ],
   },
 
@@ -52,11 +74,14 @@ module.exports = {
         from: '**/*',
         to: './',
         // 从 src 复制文件到 dist 时，排除 js 文件, 因为 js 文件需要 babel 编译;
-        ignore: ['**/*.js'],
+        ignore: ['**/*.js', '**/*.less'],
       },
     ]),
     // 自定把小程序的配置中的 pages 下的目录注册到 entry 中
-    new MinaWebpackPlugin(),
+    new MinaWebpackPlugin({
+      scriptExtensions: ['.js'],
+      assetExtensions: ['.less'],
+    }),
     // 把 runtime.js 引入到各个文件中
     new MinaRuntimePlugin(),
     // lodash 的按需加载
