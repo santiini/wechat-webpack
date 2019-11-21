@@ -267,3 +267,190 @@ class MinaWebpackPlugin {
 ```
 
 执行 `npx webpack --watch --progress`即可开启 watch 模式，修改源代码并保存，将会重新生成 dist。
+
+### sass 支持
+
+[sass](http://www.ruanyifeng.com/blog/2012/06/sass.html) 是一种 css 预处理器，当然也可以使用其它 css 预处理器，这里仅以 sass 为例，读者很容易举一反三。
+
+安装相关依赖
+
+```bash
+npm i --save-dev sass-loader node-sass file-loader
+```
+
+修改 webpack.config.js 文件
+
+```js
+module.exports = {
+  module: {
+    rules: [
++       {
++         test: /\.(scss)$/,
++         include: /src/,
++         use: [
++           {
++             loader: 'file-loader',
++             options: {
++               useRelativePath: true,
++               name: '[path][name].wxss',
++               context: resolve('src'),
++             },
++           },
++           {
++             loader: 'sass-loader',
++             options: {
++               includePaths: [resolve('src', 'styles'), resolve('src')],
++             },
++           },
++         ],
++       },
+    ],
+  },
+  plugins: [
+    new CopyWebpackPlugin([
+      {
+        from: '**/*',
+        to: './',
+-       ignore: ['**/*.js', ],
++       ignore: ['**/*.js', '**/*.scss'],
+      },
+    ]),
+    new MinaWebpackPlugin({
++      scriptExtensions: ['.js'],
++      assetExtensions: ['.scss'],
+    }),
+  ],
+}
+```
+
+在上面的配置中，我们使用到了 [file-loader](https://webpack.docschina.org/loaders/file-loader), 这是一个可以直接输出文件到 dist 的 loader。
+
+我们在分析 webpack 工作流程时，曾经提到过，loader 主要工作在 module 构建阶段。也就是说，我们依然需要添加 .scss 文件作为 entry，让 loader 能有机会去解析它，并输出最终结果。
+
+每一个 entry 都会对应一个 chunk, 每一个 entry chunk 都会输出一个文件。因为 file-loader 已经帮助我们输出最终我们想要的结果了，所以我们需要阻止这一行为。
+
+修改 plugin/MinaWebpackPlugin.js 文件，以下是修改后的样子
+
+```js
+// plugin/MinaWebpackPlugin.js
+const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+const MultiEntryPlugin = require('webpack/lib/MultiEntryPlugin');
+const path = require('path');
+const fs = require('fs');
+const replaceExt = require('replace-ext');
+
+const assetsChunkName = '__assets_chunk_name__';
+
+function itemToPlugin(context, item, name) {
+  if (Array.isArray(item)) {
+    return new MultiEntryPlugin(context, item, name);
+  }
+  return new SingleEntryPlugin(context, item, name);
+}
+
+function _inflateEntries(entries = [], dirname, entry) {
+  const configFile = replaceExt(entry, '.json');
+  const content = fs.readFileSync(configFile, 'utf8');
+  const config = JSON.parse(content);
+
+  ['pages', 'usingComponents'].forEach(key => {
+    const items = config[key];
+    if (typeof items === 'object') {
+      Object.values(items).forEach(item =>
+        inflateEntries(entries, dirname, item)
+      );
+    }
+  });
+}
+
+function inflateEntries(entries, dirname, entry) {
+  entry = path.resolve(dirname, entry);
+  if (entry != null && !entries.includes(entry)) {
+    entries.push(entry);
+    _inflateEntries(entries, path.dirname(entry), entry);
+  }
+}
+
+function first(entry, extensions) {
+  for (const ext of extensions) {
+    const file = replaceExt(entry, ext);
+    if (fs.existsSync(file)) {
+      return file;
+    }
+  }
+  return null;
+}
+
+function all(entry, extensions) {
+  const items = [];
+  for (const ext of extensions) {
+    const file = replaceExt(entry, ext);
+    if (fs.existsSync(file)) {
+      items.push(file);
+    }
+  }
+  return items;
+}
+
+class MinaWebpackPlugin {
+  constructor(options = {}) {
+    this.scriptExtensions = options.scriptExtensions || ['.ts', '.js'];
+    this.assetExtensions = options.assetExtensions || [];
+    this.entries = [];
+  }
+
+  applyEntry(compiler, done) {
+    const { context } = compiler.options;
+
+    this.entries
+      .map(item => first(item, this.scriptExtensions))
+      .map(item => path.relative(context, item))
+      .forEach(item =>
+        itemToPlugin(context, './' + item, replaceExt(item, '')).apply(compiler)
+      );
+
+    // 把所有的非 js 文件都合到同一个 entry 中，交给 MultiEntryPlugin 去处理
+    const assets = this.entries
+      .reduce(
+        (items, item) => [...items, ...all(item, this.assetExtensions)],
+        []
+      )
+      .map(item => './' + path.relative(context, item));
+    itemToPlugin(context, assets, assetsChunkName).apply(compiler);
+
+    if (done) {
+      done();
+    }
+  }
+
+  apply(compiler) {
+    const { context, entry } = compiler.options;
+    inflateEntries(this.entries, context, entry);
+
+    compiler.hooks.entryOption.tap('MinaWebpackPlugin', () => {
+      this.applyEntry(compiler);
+      return true;
+    });
+
+    compiler.hooks.watchRun.tap('MinaWebpackPlugin', (compiler, done) => {
+      this.applyEntry(compiler, done);
+    });
+
+    compiler.hooks.compilation.tap('MinaWebpackPlugin', compilation => {
+      // beforeChunkAssets 事件在 compilation.createChunkAssets 方法之前被触发
+      compilation.hooks.beforeChunkAssets.tap('MinaWebpackPlugin', () => {
+        const assetsChunkIndex = compilation.chunks.findIndex(
+          ({ name }) => name === assetsChunkName
+        );
+        if (assetsChunkIndex > -1) {
+          // 移除该 chunk, 使之不会生成对应的 asset，也就不会输出文件
+          // 如果没有这一步，最后会生成一个 __assets_chunk_name__.js 文件
+          compilation.chunks.splice(assetsChunkIndex, 1);
+        }
+      });
+    });
+  }
+}
+
+module.exports = MinaWebpackPlugin;
+```
