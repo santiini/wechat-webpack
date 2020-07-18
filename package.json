@@ -35,7 +35,7 @@
     "cross-env": "^6.0.3",
     "ensure-posix-path": "^1.1.1",
     "file-loader": "^4.2.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.24.0",
     "replace-ext": "^1.0.0",
     "required-path": "^1.0.1"
